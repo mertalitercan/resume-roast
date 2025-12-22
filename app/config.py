@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     firebase_api_key: str
     firebase_auth_domain: str
     
+    # Admin Dashboard
+    admin_email: str  # NEW
+    
     class Config:
         env_file = ".env"
 

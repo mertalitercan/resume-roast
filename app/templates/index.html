@@ -7,85 +7,160 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .score-circle {
+            stroke-dasharray: 283;
+            transition: stroke-dashoffset 1s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <div class="min-h-screen">
-        <header class="bg-white shadow">
+<body class="bg-slate-900 text-slate-200">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-slate-800 shadow-lg border-b border-slate-700">
             <div class="max-w-7xl mx-auto px-4 py-6">
                 <div class="flex justify-between items-center">
-                    <h1 class="text-3xl font-bold text-gray-900">Resume Roast</h1>
+                    <h1 class="text-3xl font-bold text-white">Resume Roast</h1>
                     <div id="authSection">
-                        <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                             Sign In with Google
                         </button>
-                        <div id="userInfo" class="hidden">
-                            <span id="userEmail" class="text-gray-700 mr-4"></span>
-                            <button id="logoutBtn" class="text-red-600 hover:text-red-800">Logout</button>
+                        <div id="userInfo" class="hidden flex items-center gap-4">
+                            <div class="text-right">
+                                <div id="userEmail" class="text-slate-300 text-sm"></div>
+                                <div id="rateLimitStatus" class="text-xs text-slate-400"></div>
+                            </div>
+                            <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition">Logout</button>
                         </div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-4xl mx-auto px-4 py-12">
+        <!-- Main Content -->
+        <main class="flex-grow max-w-7xl mx-auto px-4 py-12 w-full">
+            <!-- Login Prompt -->
             <div id="loginPrompt" class="text-center">
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold mb-4">Get AI-Powered Resume Feedback</h2>
-                    <p class="text-gray-600 mb-6">Sign in to upload your resume and receive instant, detailed feedback.</p>
-                    <button onclick="document.getElementById('loginBtn').click()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                <div class="bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Get AI-Powered Resume Feedback</h2>
+                    <p class="text-slate-400 mb-6">Sign in to upload your resume and receive instant, detailed feedback.</p>
+                    <button onclick="document.getElementById('loginBtn').click()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
                         Get Started
                     </button>
                 </div>
             </div>
 
+            <!-- Logged In State -->
             <div id="uploadSection" class="hidden">
-                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-                    <h2 class="text-2xl font-bold mb-6">Upload Your Resume</h2>
-                    
-                    <form id="uploadForm">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
-                            <input type="file" id="fileInput" accept=".pdf" class="hidden" />
-                            <label for="fileInput" class="cursor-pointer">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <p class="mt-2 text-sm text-gray-600">
-                                    <span class="font-medium text-blue-600">Click to upload</span> or drag and drop
-                                </p>
-                                <p class="text-xs text-gray-500">PDF only (max 5MB)</p>
-                            </label>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: Upload Form -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
+                            <h2 class="text-2xl font-bold mb-6 text-white">Upload Your Resume</h2>
+                            
+                            <form id="uploadForm">
+                                <!-- Job Context Inputs -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-2 text-slate-300">Target Role (Optional)</label>
+                                    <input type="text" id="jobRole" placeholder="e.g., Software Engineer" 
+                                           class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium mb-2 text-slate-300">Job Description (Optional)</label>
+                                    <textarea id="jobDescription" rows="3" placeholder="Paste the job description here for more tailored feedback..."
+                                              class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                                </div>
+
+                                <!-- File Upload -->
+                                <div class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center mb-4 bg-slate-700/30 hover:bg-slate-700/50 transition">
+                                    <input type="file" id="fileInput" accept=".pdf" class="hidden" />
+                                    <label for="fileInput" class="cursor-pointer">
+                                        <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <p class="mt-2 text-sm text-slate-400">
+                                            <span class="font-medium text-blue-400">Click to upload</span> or drag and drop
+                                        </p>
+                                        <p class="text-xs text-slate-500">PDF only (max 5MB)</p>
+                                    </label>
+                                </div>
+                                
+                                <div id="fileName" class="text-sm text-slate-400 mb-4 hidden"></div>
+                                
+                                <button type="submit" id="analyzeBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium disabled:bg-slate-600 disabled:cursor-not-allowed transition" disabled>
+                                    Analyze Resume
+                                </button>
+                            </form>
                         </div>
-                        
-                        <div id="fileName" class="text-sm text-gray-600 mb-4 hidden"></div>
-                        
-                        <button type="submit" id="analyzeBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium disabled:bg-gray-400" disabled>
-                            Analyze Resume
-                        </button>
-                    </form>
-                </div>
-
-                <div id="loadingSection" class="hidden bg-white rounded-lg shadow-lg p-8 text-center">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p class="text-gray-600">Analyzing your resume... This may take 10-20 seconds.</p>
-                </div>
-
-                <div id="resultsSection" class="hidden bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold mb-4">Analysis Results 📊</h2>
-                    <div class="mb-4 flex gap-4 text-sm text-gray-600">
-                        <span>📄 Pages: <strong id="pageCount"></strong></span>
-                        <span>📝 Words: <strong id="wordCount"></strong></span>
                     </div>
-                    <div id="feedbackContent" class="prose max-w-none bg-gray-50 p-6 rounded-lg whitespace-pre-wrap"></div>
-                    <button onclick="location.reload()" class="mt-6 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+
+                    <!-- Right Column: Past Reviews -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-slate-800 rounded-lg shadow-xl p-6 border border-slate-700 sticky top-6">
+                            <h3 class="text-xl font-bold mb-4 text-white">Past Reviews</h3>
+                            <div id="pastReviews" class="space-y-3 overflow-y-auto" style="max-height: 500px;">
+                                <p class="text-slate-400 text-sm">No reviews yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingSection" class="hidden bg-slate-800 rounded-lg shadow-xl p-8 text-center border border-slate-700 mt-6">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p class="text-slate-300">Analyzing your resume... This may take 10-20 seconds.</p>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" class="hidden bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700 mt-6">
+                    <!-- Score Circle -->
+                    <div class="flex justify-center mb-6">
+                        <div class="relative">
+                            <svg width="150" height="150" class="transform -rotate-90">
+                                <circle cx="75" cy="75" r="45" stroke="#334155" stroke-width="10" fill="none" />
+                                <circle id="scoreCircle" cx="75" cy="75" r="45" stroke="#3b82f6" stroke-width="10" fill="none" 
+                                        class="score-circle" stroke-dashoffset="283" />
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center">
+                                    <div id="scoreValue" class="text-4xl font-bold text-white">0</div>
+                                    <div class="text-sm text-slate-400">/ 100</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-bold mb-4 text-center text-white">Analysis Results</h2>
+                    <div class="mb-4 flex gap-4 text-sm text-slate-400 justify-center">
+                        <span>📄 Pages: <strong class="text-white" id="pageCount"></strong></span>
+                        <span>📝 Words: <strong class="text-white" id="wordCount"></strong></span>
+                    </div>
+                    <div id="feedbackContent" class="bg-slate-700/50 p-6 rounded-lg whitespace-pre-wrap text-slate-200 leading-relaxed border border-slate-600"></div>
+                    <button onclick="location.reload()" class="mt-6 w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
                         Analyze Another Resume
                     </button>
                 </div>
             </div>
         </main>
+
+        <!-- Footer -->
+        <footer class="bg-slate-800 border-t border-slate-700 py-6 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p class="text-slate-400 text-sm">
+                    © 2025 Mertali Tercan. All rights reserved.
+                </p>
+            </div>
+        </footer>
     </div>
 
     <script>
-
         const firebaseConfig = {
             apiKey: "{{ firebase_api_key }}",
             authDomain: "{{ firebase_auth_domain }}",
@@ -99,6 +174,60 @@
         let currentUser = null;
         let idToken = null;
 
+        // Update rate limit status
+        async function updateRateLimitStatus() {
+            if (!idToken) return;
+            
+            try {
+                const response = await fetch('/api/rate-limit-status', {
+                    headers: { 'Authorization': `Bearer ${idToken}` }
+                });
+                const data = await response.json();
+                
+                const statusEl = document.getElementById('rateLimitStatus');
+                if (data.remaining === 0) {
+                    statusEl.textContent = `⏳ Rate limit reached. Next review available soon.`;
+                    statusEl.classList.add('text-red-400');
+                } else {
+                    statusEl.textContent = `✨ ${data.remaining} review${data.remaining > 1 ? 's' : ''} remaining this hour`;
+                    statusEl.classList.remove('text-red-400');
+                }
+            } catch (error) {
+                console.error('Rate limit status error:', error);
+            }
+        }
+
+        // Load past reviews
+        async function loadPastReviews() {
+            if (!idToken) return;
+            
+            try {
+                const response = await fetch('/api/history', {
+                    headers: { 'Authorization': `Bearer ${idToken}` }
+                });
+                const data = await response.json();
+                
+                const container = document.getElementById('pastReviews');
+                if (data.resumes.length === 0) {
+                    container.innerHTML = '<p class="text-slate-400 text-sm">No reviews yet</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.resumes.map(resume => `
+                    <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition cursor-pointer">
+                        <div class="flex justify-between items-start mb-1">
+                            <p class="text-sm font-medium text-white truncate flex-1">${resume.filename}</p>
+                            <span class="text-xs font-bold ${resume.score >= 80 ? 'text-green-400' : resume.score >= 60 ? 'text-yellow-400' : 'text-red-400'} ml-2">${resume.score || 'N/A'}</span>
+                        </div>
+                        <p class="text-xs text-slate-400">${new Date(resume.created_at).toLocaleDateString()}</p>
+                        ${resume.job_role ? `<p class="text-xs text-blue-400 mt-1">🎯 ${resume.job_role}</p>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading past reviews:', error);
+            }
+        }
+
         // Auth state listener
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -111,6 +240,10 @@
                 document.getElementById('loginBtn').classList.add('hidden');
                 document.getElementById('userInfo').classList.remove('hidden');
                 document.getElementById('userEmail').textContent = user.email;
+                
+                // Load data
+                updateRateLimitStatus();
+                loadPastReviews();
             } else {
                 currentUser = null;
                 idToken = null;
@@ -147,12 +280,46 @@
             }
         });
 
+        // Animate score circle
+        function animateScore(score) {
+            const circle = document.getElementById('scoreCircle');
+            const valueEl = document.getElementById('scoreValue');
+            const circumference = 2 * Math.PI * 45; // 2πr
+            const offset = circumference - (score / 100) * circumference;
+            
+            // Animate circle
+            circle.style.strokeDashoffset = offset;
+            
+            // Color based on score
+            if (score >= 80) {
+                circle.style.stroke = '#10b981'; // green
+            } else if (score >= 60) {
+                circle.style.stroke = '#f59e0b'; // yellow
+            } else {
+                circle.style.stroke = '#ef4444'; // red
+            }
+            
+            // Animate number
+            let current = 0;
+            const increment = score / 50; // 50 frames
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= score) {
+                    current = score;
+                    clearInterval(timer);
+                }
+                valueEl.textContent = Math.round(current);
+            }, 20);
+        }
+
         // Form submission
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
+            const jobRole = document.getElementById('jobRole').value;
+            const jobDescription = document.getElementById('jobDescription').value;
             
             if (!file) {
                 alert('Please select a file');
@@ -165,12 +332,14 @@
             }
 
             // Show loading
-            document.getElementById('uploadSection').querySelector('.bg-white').classList.add('hidden');
+            document.getElementById('uploadSection').querySelector('.bg-slate-800').classList.add('hidden');
             document.getElementById('loadingSection').classList.remove('hidden');
 
             // Upload and analyze
             const formData = new FormData();
             formData.append('file', file);
+            if (jobRole) formData.append('job_role', jobRole);
+            if (jobDescription) formData.append('job_description', jobDescription);
 
             try {
                 const response = await fetch('/api/analyze', {
@@ -193,6 +362,13 @@
                 document.getElementById('pageCount').textContent = data.page_count;
                 document.getElementById('wordCount').textContent = data.word_count;
                 document.getElementById('feedbackContent').textContent = data.feedback;
+                
+                // Animate score
+                animateScore(data.score);
+
+                // Refresh past reviews and rate limit
+                loadPastReviews();
+                updateRateLimitStatus();
 
             } catch (error) {
                 alert('Error: ' + error.message);
