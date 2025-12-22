@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Roast - AI Resume Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-gray-900">Resume Roast</h1>
+                    <div id="authSection">
+                        <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Sign In with Google
+                        </button>
+                        <div id="userInfo" class="hidden">
+                            <span id="userEmail" class="text-gray-700 mr-4"></span>
+                            <button id="logoutBtn" class="text-red-600 hover:text-red-800">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-4xl mx-auto px-4 py-12">
+            <div id="loginPrompt" class="text-center">
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-4">Get AI-Powered Resume Feedback</h2>
+                    <p class="text-gray-600 mb-6">Sign in to upload your resume and receive instant, detailed feedback.</p>
+                    <button onclick="document.getElementById('loginBtn').click()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+
+            <div id="uploadSection" class="hidden">
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Upload Your Resume</h2>
+                    
+                    <form id="uploadForm">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
+                            <input type="file" id="fileInput" accept=".pdf" class="hidden" />
+                            <label for="fileInput" class="cursor-pointer">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-600">
+                                    <span class="font-medium text-blue-600">Click to upload</span> or drag and drop
+                                </p>
+                                <p class="text-xs text-gray-500">PDF only (max 5MB)</p>
+                            </label>
+                        </div>
+                        
+                        <div id="fileName" class="text-sm text-gray-600 mb-4 hidden"></div>
+                        
+                        <button type="submit" id="analyzeBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium disabled:bg-gray-400" disabled>
+                            Analyze Resume
+                        </button>
+                    </form>
+                </div>
+
+                <div id="loadingSection" class="hidden bg-white rounded-lg shadow-lg p-8 text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Analyzing your resume... This may take 10-20 seconds.</p>
+                </div>
+
+                <div id="resultsSection" class="hidden bg-white rounded-lg shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-4">Analysis Results 📊</h2>
+                    <div class="mb-4 flex gap-4 text-sm text-gray-600">
+                        <span>📄 Pages: <strong id="pageCount"></strong></span>
+                        <span>📝 Words: <strong id="wordCount"></strong></span>
+                    </div>
+                    <div id="feedbackContent" class="prose max-w-none bg-gray-50 p-6 rounded-lg whitespace-pre-wrap"></div>
+                    <button onclick="location.reload()" class="mt-6 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                        Analyze Another Resume
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+
+        const firebaseConfig = {
+            apiKey: "{{ firebase_api_key }}",
+            authDomain: "{{ firebase_auth_domain }}",
+            projectId: "{{ firebase_project_id }}",
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        let currentUser = null;
+        let idToken = null;
+
+        // Auth state listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                idToken = await user.getIdToken();
+                
+                // Update UI
+                document.getElementById('loginPrompt').classList.add('hidden');
+                document.getElementById('uploadSection').classList.remove('hidden');
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('userEmail').textContent = user.email;
+            } else {
+                currentUser = null;
+                idToken = null;
+                
+                // Update UI
+                document.getElementById('loginPrompt').classList.remove('hidden');
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('loginBtn').classList.remove('hidden');
+                document.getElementById('userInfo').classList.add('hidden');
+            }
+        });
+
+        // Login
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            try {
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+        });
+
+        // File selection
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
+                document.getElementById('fileName').classList.remove('hidden');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        });
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            if (!idToken) {
+                alert('Please log in first');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('uploadSection').querySelector('.bg-white').classList.add('hidden');
+            document.getElementById('loadingSection').classList.remove('hidden');
+
+            // Upload and analyze
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Analysis failed');
+                }
+
+                // Show results
+                document.getElementById('loadingSection').classList.add('hidden');
+                document.getElementById('resultsSection').classList.remove('hidden');
+                document.getElementById('pageCount').textContent = data.page_count;
+                document.getElementById('wordCount').textContent = data.word_count;
+                document.getElementById('feedbackContent').textContent = data.feedback;
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
