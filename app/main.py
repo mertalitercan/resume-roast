@@ -18,7 +18,6 @@ from app.services.auth_service import AuthService
 app = FastAPI(title="ResumeRoast")
 settings = get_settings()
 templates = Jinja2Templates(directory="app/templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Services
 pdf_service = PDFService()
