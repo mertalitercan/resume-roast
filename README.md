@@ -2,6 +2,8 @@
 
 An AI-powered tool designed to help job seekers optimize their resumes by providing instant, actionable feedback. It analyzes PDFs to enhance bullet points, metrics, and ATS compatibility.
 
+Demo: https://resume-roast-t1w8.onrender.com/
+
 ## Features
 
 - 📄 PDF resume upload and text extraction
