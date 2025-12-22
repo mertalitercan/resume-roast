@@ -1,6 +1,6 @@
 # Resume Roast
 
-AI-Powered Resume Review Platform built with FastAPI, Python, MongoDB, AWS S3, Docker, Firebase Auth, and OpenAI API.
+An AI-powered tool designed to help job seekers optimize their resumes by providing instant, actionable feedback. It analyzes PDFs to enhance bullet points, metrics, and ATS compatibility.
 
 ## Features
 
