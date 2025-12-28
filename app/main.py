@@ -32,9 +32,9 @@ users_collection = db["users"]
 resumes_collection = db["resumes"]
 
 # --- Keep-Alive Route ---
-@app.get("/health")
+@app.route('/health', methods=['GET', 'HEAD'])
 def health_check():
-    return {"status": "OK"}
+    return "OK", 200
 # ------------------------
 
 def check_rate_limit(user_id: str) -> bool:
