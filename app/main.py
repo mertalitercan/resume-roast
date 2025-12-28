@@ -14,12 +14,6 @@ from app.services.ai_service import AIService
 from app.services.storage_service import StorageService
 from app.services.auth_service import AuthService
 
-# --- Keep-Alive Route ---
-@app.get("/health")
-def health_check():
-    return {"status": "OK"}
-# ------------------------
-
 # Initialize
 app = FastAPI(title="ResumeRoast")
 settings = get_settings()
@@ -36,6 +30,12 @@ mongo_client = MongoClient(settings.mongodb_uri)
 db = mongo_client["resumeroast"]
 users_collection = db["users"]
 resumes_collection = db["resumes"]
+
+# --- Keep-Alive Route ---
+@app.get("/health")
+def health_check():
+    return {"status": "OK"}
+# ------------------------
 
 def check_rate_limit(user_id: str) -> bool:
     """Check if user has exceeded 2 reviews per hour"""
