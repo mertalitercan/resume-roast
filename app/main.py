@@ -31,11 +31,10 @@ db = mongo_client["resumeroast"]
 users_collection = db["users"]
 resumes_collection = db["resumes"]
 
-# --- Keep-Alive Route ---
-@app.route('/health', methods=['GET', 'HEAD'])
-def health_check():
-    return "OK", 200
-# ------------------------
+# Allow HEAD for UptimeRobot
+@app.api_route("/health", methods=["GET", "HEAD"])
+async def health_check():
+    return {"status": "healthy"}
 
 def check_rate_limit(user_id: str) -> bool:
     """Check if user has exceeded 2 reviews per hour"""
