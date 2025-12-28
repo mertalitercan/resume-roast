@@ -14,6 +14,12 @@ from app.services.ai_service import AIService
 from app.services.storage_service import StorageService
 from app.services.auth_service import AuthService
 
+# --- Keep-Alive Route ---
+@app.get("/health")
+def health_check():
+    return {"status": "OK"}
+# ------------------------
+
 # Initialize
 app = FastAPI(title="ResumeRoast")
 settings = get_settings()
