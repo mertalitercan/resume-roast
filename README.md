@@ -1,6 +1,6 @@
-# Resume Roast
+# Resume Toast
 
-An AI-powered tool designed to help job seekers optimize their resumes by providing instant, actionable feedback. It analyzes PDFs to enhance bullet points, metrics, and ATS compatibility.
+An AI-powered tool designed to help job seekers optimize their resumes by providing instant, actionable feedback. It analyzes resumes to enhance bullet points, metrics, and ATS compatibility.
 
 Demo: https://resume-roast-t1w8.onrender.com/
 
@@ -26,7 +26,7 @@ Demo: https://resume-roast-t1w8.onrender.com/
 ### 2. Clone and Install
 
 ```bash
-cd resumeroast
+cd resumetoast
 pip install -r requirements.txt
 ```
 
@@ -97,7 +97,7 @@ Visit: http://localhost:8000
 ## Project Structure
 
 ```
-resumeroast/
+resumetoast/
 ├── app/
 │   ├── main.py              # FastAPI app
 │   ├── config.py            # Configuration
